@@ -10,7 +10,8 @@ find_package(Slint REQUIRED)
 set(PROJECT_TARGET ZLG_USBCAN_2E_U)
 
 # 3. 创建可执行文件 (加上 WIN32 隐藏黑窗口)
-add_executable(${PROJECT_TARGET} WIN32 src/main.cpp)
+add_executable(${PROJECT_TARGET} WIN32 src/main.cpp
+                                        ui/resources.rc)
 
 # 4. 修复 LNK2019 WinMain 报错：强制指定入口点为 main
 if(MSVC)
