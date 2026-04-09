@@ -1,36 +1,139 @@
-import { Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, ComboBox, CheckBox, LineEdit, TextEdit, GroupBox } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
-    // 1. 定义数据槽位：是否在线
-    in property <bool> is-online: false;
-    in property <int> device-count : 0;
+    title: "TMC 控制器诊断测试工具";
+    min-width: 450px;
+    min-height: 750px;
+    background: #f5f5f5;
 
-    callback  add_device();
+    // --- 数据模型 (WPF 的 DataContext/Binding) ---
+    in property <string> test-status: "等待测试";
+    in property <color> status-color: #808080;
+    in property <bool> is-connected: false;
     
-    // 2. 定义动作槽位：当点击刷新按钮时
-    callback request-refresh();
+    // 步骤指示灯颜色 (Gray, Green, Red 等)
+    in property <color> step1-color: gray;
+    in property <color> step2-color: gray;
+    in property <color> step3-color: gray;
 
-    title: "USB设备管理器";
-    min-width: 300px;
+    // --- 回调函数 (WPF 的 Event Handler) ---
+    callback connect-clicked();
+    callback disconnect-clicked();
+    callback start-test-clicked();
 
     VerticalBox {
-        alignment: center;
-        spacing: 20px;
+        padding: 20px;
+        spacing: 15px;
 
-        // 状态显示区域
-        HorizontalBox {
-            alignment: center;
-            Text {
-                text: root.is-online ? "设备已连接" : "设备未找到";
-                color: root.is-online ? green : red;
-                font-size: 24px;
+        // 1. 设备连接配置 (类似 WPF 的 GroupBox + UniformGrid)
+        Text { text: "设备连接配置"; font-size: 16px; font-weight: 700; }
+        
+        GridLayout {
+            spacing: 10px;
+            Row {
+                VerticalBox { 
+                    padding: 0; Text { text: "设备型号:"; }
+                    ComboBox { model: ["USBCANFD-100U", "USBCANFD-200U"]; current-index: 0; }
+                }
+                VerticalBox { 
+                    padding: 0; Text { text: "CAN通道:"; }
+                    ComboBox { model: ["通道 1", "通道 2"]; current-index: 0; }
+                }
+            }
+            Row {
+                VerticalBox { 
+                    padding: 0; Text { text: "仲裁波特率:"; }
+                    ComboBox { model: ["500K", "250K"]; current-index: 0; }
+                }
+                VerticalBox { 
+                    padding: 0; alignment: center;
+                    CheckBox { text: "启用 120Ω"; checked: true; }
+                }
             }
         }
 
-        // 按钮调用回调
+        // 2. 连接按钮 (UniformGrid)
+        HorizontalBox {
+            spacing: 10px;
+            Button { 
+                text: "打开设备"; height: 35px;
+                enabled: !root.is-connected;
+                clicked => { root.connect-clicked() }
+            }
+            Button { 
+                text: "关闭设备"; height: 35px;
+                enabled: root.is-connected;
+                clicked => { root.disconnect-clicked() }
+            }
+        }
+
+        // 3. 状态条 (WPF 的 Border + TextBlock)
+        Rectangle {
+            height: 50px;
+            background: root.status-color;
+            border-radius: 5px;
+            Text {
+                text: root.test-status;
+                color: white;
+                font-size: 20px;
+                font-weight: 700;
+            }
+        }
+
+        Rectangle { height: 1px; background: #DDD; } // Separator
+
+        // 4. 测试任务列表
+        Text { text: "测试任务列表"; font-size: 16px; font-weight: 700; }
+
+        // 步骤封装组件 (类似 WPF 的 DataTemplate)
+        VerticalBox {
+            padding: 0; spacing: 5px;
+            
+            // 步骤 1
+            Rectangle {
+                border-width: 1px; border-color: #DDD; border-radius: 5px; background: white;
+                HorizontalBox {
+                    Text { text: "步骤 1: 安全解锁 (Seed-Key)"; vertical-alignment: center; }
+                    Rectangle { width: 15px; height: 15px; border-radius: 7.5px; background: root.step1-color; }
+                }
+            }
+            // 步骤 2
+            Rectangle {
+                border-width: 1px; border-color: #DDD; border-radius: 5px; background: white;
+                HorizontalBox {
+                    Text { text: "步骤 2 & 3: 写入 F1C1 数据"; vertical-alignment: center; }
+                    Rectangle { width: 15px; height: 15px; border-radius: 7.5px; background: root.step2-color; }
+                }
+            }
+            // 步骤 3
+            Rectangle {
+                border-width: 1px; border-color: #DDD; border-radius: 5px; background: white;
+                HorizontalBox {
+                    Text { text: "步骤 4: 读取并校验 F1C1"; vertical-alignment: center; }
+                    Rectangle { width: 15px; height: 15px; border-radius: 7.5px; background: root.step3-color; }
+                }
+            }
+        }
+
+        // 5. 开始按钮
         Button {
-            text: "检查设备状态";
-            clicked => { root.request-refresh() }
+            text: "开始自动测试";
+            height: 45px;
+            enabled: root.is-connected;
+            // 这种写法直接在 UI 逻辑里控制样式 (WPF 需要写 Trigger)
+            // background: self.enabled ? #007ACC : #808080;
+            primary: true;
+            clicked => { root.start-test-clicked() }
+        }
+
+        // 6. 日志 (WPF 的 TextBox)
+        Text { text: "实时日志:"; font-weight: 700; }
+        TextEdit {
+            font-family: "Consolas";
+            font-size: 11px;
+            // background: #F4F4F4;
+            read-only: true;
+            // text: "..." 这里由 C++ 绑定
         }
     }
 }

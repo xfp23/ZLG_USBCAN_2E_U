@@ -4,16 +4,16 @@
 int main() {
     auto ui = AppWindow::create();
 
-    ui->on_request_refresh([ui] {
-        std::cout << "Scanning hardware..." << std::endl;
+    // ui->on_request_refresh([ui] {
+    //     std::cout << "Scanning hardware..." << std::endl;
 
-        bool hardware_found = true; 
+    //     bool hardware_found = true; 
 
-        // 修改属性
-        ui->set_is_online(hardware_found);
+    //     // 修改属性
+    //     ui->set_is_online(hardware_found);
         
-        std::cout << "Status updated!" << std::endl;
-    });
+    //     std::cout << "Status updated!" << std::endl;
+    // });
 
     ui->run();
 
