@@ -1,35 +1,39 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
+project(TMC_Diag LANGUAGES CXX RC)
 
-# 项目名称
-project(ZLG_USBCAN_2E_U LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 1. 查找 Slint 包
+# MSVC: 使用 UTF-8 編碼（設置語言選項）
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+# 或者：
+# if(MSVC) add_compile_options("/utf-8") endif()
+
+# Slint: 查找安裝好的 Slint 套件
 find_package(Slint REQUIRED)
 
-# 2. 定义目标名称变量
-set(PROJECT_TARGET ZLG_USBCAN_2E_U)
+# 子模組
+add_subdirectory(components)
 
-# 3. 创建可执行文件 (加上 WIN32 隐藏黑窗口)
-add_executable(${PROJECT_TARGET} WIN32 src/main.cpp
-                                        ui/resources.rc)
-
-# 4. 修复 LNK2019 WinMain 报错：强制指定入口点为 main
-if(MSVC)
-    set_target_properties(${PROJECT_TARGET} PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup")
-endif()
-
-# 5. 链接 Slint 库
-target_link_libraries(${PROJECT_TARGET} PRIVATE Slint::Slint)
-
-# 6. 编译 Slint UI 文件
-slint_target_sources(${PROJECT_TARGET} ui/app-window.slint)
-
-# 7. Windows 自动复制运行所需的 DLL (如 slint.dll) 到 exe 所在目录
+# Windows 下支持資源文件 (ICO 等)
 if (WIN32)
-    add_custom_command(TARGET ${PROJECT_TARGET} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        $<TARGET_RUNTIME_DLLS:${PROJECT_TARGET}>
-        $<TARGET_FILE_DIR:${PROJECT_TARGET}>
-        COMMAND_EXPAND_LISTS
-    )
+    enable_language(RC)
 endif()
+
+# 可執行檔：含主程序和 Windows 資源文件
+add_executable(TMC_Diag
+    src/main.cpp
+    ui/resources.rc    # 包含 ICON 的資源腳本
+)
+
+# Slint UI 文件
+target_link_libraries(TMC_Diag PRIVATE Slint::Slint USBCAN_2E_U)
+slint_target_sources(TMC_Diag ui/app-window.slint)
+
+# 包含全局頭文件
+target_include_directories(TMC_Diag PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Global/include
+)
+
+# Windows GUI 選項：如需 GUI（無控制台），使用 WIN32_EXECUTABLE
+# set_target_properties(TMC_Diag PROPERTIES WIN32_EXECUTABLE YES)
