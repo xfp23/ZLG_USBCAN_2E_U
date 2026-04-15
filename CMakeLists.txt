@@ -1,39 +1,71 @@
 cmake_minimum_required(VERSION 3.21)
-project(TMC_Diag LANGUAGES CXX RC)
+
+# ===== 工程名统一 =====
+set(PROJECT_NAME TMC_Diag)
+
+project(${PROJECT_NAME} LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# MSVC: 使用 UTF-8 編碼（設置語言選項）
-add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>" "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
-# 或者：
-# if(MSVC) add_compile_options("/utf-8") endif()
-
-# Slint: 查找安裝好的 Slint 套件
-find_package(Slint REQUIRED)
-
-# 子模組
-add_subdirectory(components)
-
-# Windows 下支持資源文件 (ICO 等)
-if (WIN32)
-    enable_language(RC)
+# ===== UTF-8 =====
+if(MSVC)
+    add_compile_options(/utf-8)
 endif()
 
-# 可執行檔：含主程序和 Windows 資源文件
-add_executable(TMC_Diag
+# ===== Slint =====
+find_package(Slint REQUIRED)
+
+# ===== 子模块 =====
+add_subdirectory(components)
+
+# ===== 收集 Global 源码 =====
+file(GLOB_RECURSE GLOBAL_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/Global/src/*.cpp
+)
+
+file(GLOB_RECURSE SlintWindow_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/SlintWindow/src/*.cpp
+)
+
+# ===== 可执行文件 =====
+add_executable(${PROJECT_NAME}
     src/main.cpp
-    ui/resources.rc    # 包含 ICON 的資源腳本
+    ui/resources.rc
+    ${GLOBAL_SRC}
+    ${SlintWindow_SRC}
 )
 
-# Slint UI 文件
-target_link_libraries(TMC_Diag PRIVATE Slint::Slint USBCAN_2E_U)
-slint_target_sources(TMC_Diag ui/app-window.slint)
+# ===== Slint UI =====
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    Slint::Slint
+    USBCAN_2E_U
+)
 
-# 包含全局頭文件
-target_include_directories(TMC_Diag PRIVATE
+slint_target_sources(${PROJECT_NAME} ui/app-window.slint)
+
+# ===== include =====
+target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Global/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/SlintWindow/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Windows GUI 選項：如需 GUI（無控制台），使用 WIN32_EXECUTABLE
-# set_target_properties(TMC_Diag PROPERTIES WIN32_EXECUTABLE YES)
+# ===== 关键：GUI + main() 共存 =====
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        WIN32_EXECUTABLE YES
+        LINK_FLAGS "/ENTRY:mainCRTStartup"
+    )
+endif()
+
+# ===== 自动复制 DLL（关键）=====
+if (WIN32)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}>
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMAND_EXPAND_LISTS
+    )
+endif()

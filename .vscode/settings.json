@@ -1,0 +1,14 @@
+{
+    "cmake.configureOnOpen": true,
+
+    "C_Cpp.intelliSenseEngine": "default",
+
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+
+    "files.encoding": "utf8",
+
+    "terminal.integrated.env.windows": {
+        "CHCP": "65001"
+    },
+    
+}

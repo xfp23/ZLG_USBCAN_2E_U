@@ -1,19 +1,14 @@
-#include "app-window.h"
-#include <iostream>
+#include "Global.h"
+
+void on_connect()
+{
+    std::cout << "connect clicked\n";
+}
 
 int main() {
     auto ui = AppWindow::create();
 
-    // ui->on_request_refresh([ui] {
-    //     std::cout << "Scanning hardware..." << std::endl;
-
-    //     bool hardware_found = true; 
-
-    //     // 修改属性
-    //     ui->set_is_online(hardware_found);
-        
-    //     std::cout << "Status updated!" << std::endl;
-    // });
+    ui->on_connect_clicked(on_connect);
 
     ui->run();
 
