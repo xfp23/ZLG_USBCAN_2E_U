@@ -1,16 +1,8 @@
 #include "Global.h"
 
-void on_connect()
-{
-    std::cout << "connect clicked\n";
-}
-
 int main() {
-    auto ui = AppWindow::create();
+    SlintWindow *MainWindow = new SlintWindow();
 
-    ui->on_connect_clicked(on_connect);
-
-    ui->run();
-
+    MainWindow->show();
     return 0;
 }

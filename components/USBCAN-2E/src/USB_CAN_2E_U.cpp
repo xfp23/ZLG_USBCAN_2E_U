@@ -1,4 +1,4 @@
-#include <windows.h>
+// #include <windows.h>
 
 #include "USB_CAN_2E_U.h"
 // #include "stdafx.h"

@@ -9,13 +9,22 @@
  * 
  */
 #pragma once
-#include "main.h"
+#include "Global.h"
 
 class SlintWindow
 {
 private:
-    slint::ComponentHandle<AppWindow> _ui;
+    slint::ComponentHandle<AppWindow> ui_;
+    
+    UsbCan2EU *usb_can = nullptr;
+    void BindEvents();
+
+    void BtnClick_ConnectDevice();
+    void BtnClick_DisConnectDevice();
+    void BtnClick_StartDiag();
 public:
-    SlintWindow(slint::ComponentHandle<AppWindow> ui);
+    SlintWindow();
     ~SlintWindow();
+
+    void show();
 };

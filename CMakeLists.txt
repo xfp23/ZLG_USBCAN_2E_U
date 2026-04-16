@@ -14,6 +14,8 @@ if(MSVC)
     add_compile_options(/utf-8)
 endif()
 
+# set(CMAKE_GENERATOR_PLATFORM Win32)
+
 # ===== Slint =====
 find_package(Slint REQUIRED)
 

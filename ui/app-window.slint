@@ -10,12 +10,21 @@ export component AppWindow inherits Window {
     // --- 数据模型 (WPF 的 DataContext/Binding) ---
     in property <string> test-status: "等待测试";
     in property <color> status-color: #808080;
-    in property <bool> is-connected: false;
-    
+    // in property <bool> is-connected: false;
+    in property <bool> OpenDevBtnEnable: true;
+    in property <bool> CloseDevBtnEnable: false;
+    in property <bool> StartDiagBtnEnable: false;
+
+    // 打开设备出错
+    // in property <bool> : false;
+    in-out property <bool> OpenDevError: false;
     // 步骤指示灯颜色 (Gray, Green, Red 等)
     in property <color> step1-color: gray;
     in property <color> step2-color: gray;
     in property <color> step3-color: gray;
+
+    in-out property <int> selected-can-channel: 0;
+    in-out property <int> selected-can-baud: 0;
 
     // --- 回调函数 (WPF 的 Event Handler) ---
     callback connect-clicked();
@@ -51,7 +60,7 @@ export component AppWindow inherits Window {
             Row {
                 VerticalBox { 
                     padding: 0; Text { text: "仲裁波特率:"; }
-                    ComboBox { model: ["500K", "250K"]; current-index: 0; }
+                    ComboBox { model: ["500K", "250K"]; current-index <=> root.selected-can-channel;}
                 }
                 VerticalBox { 
                     padding: 0; alignment: center;
@@ -65,12 +74,12 @@ export component AppWindow inherits Window {
             spacing: 10px;
             Button { 
                 text: "打开设备"; height: 35px;
-                enabled: !root.is-connected;
+                enabled: root.OpenDevBtnEnable;
                 clicked => { root.connect-clicked() }
             }
             Button { 
                 text: "关闭设备"; height: 35px;
-                enabled: root.is-connected;
+                enabled: root.CloseDevBtnEnable;
                 clicked => { root.disconnect-clicked() }
             }
         }
@@ -127,7 +136,7 @@ export component AppWindow inherits Window {
         Button {
             text: "开始自动测试";
             height: 45px;
-            enabled: root.is-connected;
+            enabled: root.StartDiagBtnEnable;
             // 这种写法直接在 UI 逻辑里控制样式 (WPF 需要写 Trigger)
             // background: self.enabled ? #007ACC : #808080;
             primary: true;
@@ -144,4 +153,51 @@ export component AppWindow inherits Window {
             // text: "..." 这里由 C++ 绑定
         }
     }
+if (root.OpenDevError) : Rectangle {
+    // 遮罩层
+    background: #00000080;
+    horizontal-stretch: 1;
+    vertical-stretch: 1;
+
+    // 用布局来做居中（关键！！）
+    HorizontalBox {
+        alignment: center;
+
+        VerticalBox {
+            alignment: center;
+
+            // 弹窗主体
+            Rectangle {
+                width: 300px;
+                height: 150px;
+                background: white;
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: #ccc;
+
+                VerticalBox {
+                    padding: 15px;
+                    spacing: 10px;
+                    alignment: center;
+
+                    Text {
+                        text: "打开设备失败";
+                        color: red;
+                        font-size: 16px;
+                        horizontal-alignment: center;
+                    }
+
+                    Button {
+                        text: "确定";
+                        clicked => {
+                            root.OpenDevError = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
+
+}
+
