@@ -81,7 +81,6 @@ UsbCan2EU::Status_t UsbCan2EU::OpenChannel(Channel_t channel,BaudRate_t baud)
         return Status_t::ERR;
     }
 
-   // 在 OpenChannel 结尾修改
     this->g_thd_run[(int)channel] = true; // 给每个通道一个独立的运行标志
     this->thd_handle[(int)channel] = std::thread(&UsbCan2EU::thread_task, this, this->chn[(int)channel], (int)channel);
     return Status_t::OK;
