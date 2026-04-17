@@ -88,39 +88,75 @@ UsbCan2EU::Status_t UsbCan2EU::OpenChannel(Channel_t channel,BaudRate_t baud)
     return Status_t::OK;
 }
 
+// void UsbCan2EU::thread_task(CHANNEL_HANDLE chn, int chn_idx) 
+// {
+//     ZCAN_Receive_Data canData[100];
+    
+//     while (this->g_thd_run[chn_idx]) 
+//     {
+//         uint32_t num = ZCAN_GetReceiveNum(chn, 0);
+//         if (num > 0) 
+//         {
+//             uint32_t ReceiveNum = ZCAN_Receive(chn, canData, 100, 50);
+//             if (ReceiveNum > 0 && this->recv_callback != nullptr) 
+//             {
+                
+//                 ChannelCanData_t localData; 
+//                 localData.recv_num = ReceiveNum;
+//                 localData.info.resize(ReceiveNum);
+
+//                 for (uint32_t i = 0; i < ReceiveNum; i++) {
+//                     localData.info[i].ch = (Channel_t)chn_idx;
+//                     localData.info[i].id = GET_ID(canData[i].frame.can_id);
+//                     localData.info[i].dlc = canData[i].frame.can_dlc;
+//                     memcpy(localData.info[i].data, canData[i].frame.data, 8);
+//                 }
+
+//                 if(this->recv_callback != nullptr)
+//                 {
+//                 this->recv_callback(localData);
+//                 }
+
+//             }
+//         }
+//     if (num == 0)
+//     std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//     }
+// }
+
+/**
+ * @brief 新的接收方案
+ * 
+ * @param chn 
+ * @param chn_idx 
+ */
 void UsbCan2EU::thread_task(CHANNEL_HANDLE chn, int chn_idx) 
 {
     ZCAN_Receive_Data canData[100];
-    
+
     while (this->g_thd_run[chn_idx]) 
     {
-        uint32_t num = ZCAN_GetReceiveNum(chn, 0);
-        if (num > 0) 
+        uint32_t ReceiveNum = ZCAN_Receive(chn, canData, 100, 10);
+
+        if (ReceiveNum > 0 && this->recv_callback)
         {
-            uint32_t ReceiveNum = ZCAN_Receive(chn, canData, 100, 50);
-            if (ReceiveNum > 0 && this->recv_callback != nullptr) 
-            {
-                
-                ChannelCanData_t localData; 
-                localData.recv_num = ReceiveNum;
-                localData.info.resize(ReceiveNum);
+            ChannelCanData_t localData;
+            localData.recv_num = ReceiveNum;
+            localData.info.resize(ReceiveNum);
 
-                for (uint32_t i = 0; i < ReceiveNum; i++) {
-                    localData.info[i].ch = (Channel_t)chn_idx;
-                    localData.info[i].id = GET_ID(canData[i].frame.can_id);
-                    localData.info[i].dlc = canData[i].frame.can_dlc;
-                    memcpy(localData.info[i].data, canData[i].frame.data, 8);
-                }
-
-                if(this->recv_callback != nullptr)
-                {
-                this->recv_callback(localData);
-                }
-
+            for (uint32_t i = 0; i < ReceiveNum; i++) {
+                localData.info[i].ch = (Channel_t)chn_idx;
+                localData.info[i].id = GET_ID(canData[i].frame.can_id);
+                localData.info[i].dlc = canData[i].frame.can_dlc;
+                memcpy(localData.info[i].data, canData[i].frame.data, 8);
             }
+
+            if(this->recv_callback != nullptr)
+            {
+            this->recv_callback(localData);
+            }
+
         }
-    if (num == 0)
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
